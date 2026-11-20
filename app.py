@@ -149,7 +149,31 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.divider()
+import sqlite3
 
+conn = sqlite3.connect("stocksense.db")
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS portfolio (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stock TEXT,
+    symbol TEXT,
+    purchase_price REAL,
+    quantity INTEGER
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stock TEXT,
+    symbol TEXT
+)
+""")
+
+conn.commit()
+conn.close()
 page = st.sidebar.radio(
     "WORKSPACE",
     ["Dashboard", "Analytics", "Prediction", "Watchlist", "Portfolio"]
