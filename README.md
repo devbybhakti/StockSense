@@ -88,4 +88,28 @@ streamlit run app.py
 
 ## 🎯 Project Objective
 
-The objective of StockSense is to create
+The objective of StockSense is to create an accessible and interactive platform that combines stock market analytics, technical indicators, machine learning-based price estimation, watchlist management, and portfolio tracking in one application.
+
+The project aims to simplify stock market data analysis through interactive visualizations and an intuitive user interface.
+
+## ⚠️ Disclaimer
+
+StockSense is an educational and analytical project. Stock price predictions are experimental estimates and should not be considered financial advice or investment recommendations.
+
+## 👩‍💻 Developer
+
+**Bhakti Ranmale**
+
+Information Technology Student
+
+GitHub: https://github.com/devbybhakti
+
+## 🌐 Explore the Project
+
+**Live Application:** https://stocksense-by-bhakti.streamlit.app/
+
+**GitHub Repository:** https://github.com/devbybhakti/StockSense
+
+---
+
+⭐ If you find this project interesting, feel free to explore the repository and try the live application!
