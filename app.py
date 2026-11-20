@@ -794,6 +794,185 @@ elif page == "Watchlist":
     else:
         st.info("Your watchlist is empty. Add your first stock!")
 
+elif page == "Portfolio":
+
+    import sqlite3
+    import plotly.express as px
+
+    st.title("💼 My Investment Portfolio")
+    st.caption("Track your investments and monitor your returns.")
+
+    stock_options = {
+        "TCS": "TCS.NS",
+        "Infosys": "INFY.NS",
+        "Reliance Industries": "RELIANCE.NS",
+        "HDFC Bank": "HDFCBANK.NS",
+        "ICICI Bank": "ICICIBANK.NS",
+        "Wipro": "WIPRO.NS",
+        "Tata Motors": "TATAMOTORS.NS",
+        "ITC": "ITC.NS"
+    }
+
+    with st.form("add_portfolio_form"):
+        selected_stock = st.selectbox(
+            "Select Stock",
+            list(stock_options.keys())
+        )
+
+        purchase_price = st.number_input(
+            "Purchase Price (₹)",
+            min_value=0.01,
+            value=3500.0,
+            step=10.0
+        )
+
+        quantity = st.number_input(
+            "Quantity",
+            min_value=1,
+            value=1,
+            step=1
+        )
+
+        submitted = st.form_submit_button("Add Investment")
+
+    if submitted:
+        conn = sqlite3.connect("stocksense.db")
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """INSERT INTO portfolio
+            (stock, symbol, purchase_price, quantity)
+            VALUES (?, ?, ?, ?)""",
+            (
+                selected_stock,
+                stock_options[selected_stock],
+                purchase_price,
+                quantity
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+        st.success("Investment added successfully!")
+        st.rerun()
+
+    conn = sqlite3.connect("stocksense.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id, stock, symbol, purchase_price, quantity FROM portfolio"
+    )
+
+    investments = cursor.fetchall()
+    conn.close()
+
+    if investments:
+
+        portfolio_data = []
+        total_investment = 0
+        total_current_value = 0
+
+        for item_id, stock, symbol, purchase_price, quantity in investments:
+
+            try:
+                data = get_stock_data(symbol, "5d")
+
+                if not data.empty:
+                    current_price = float(data["Close"].iloc[-1])
+                else:
+                    current_price = purchase_price
+
+            except Exception:
+                current_price = purchase_price
+
+            invested_value = purchase_price * quantity
+            current_value = current_price * quantity
+            profit_loss = current_value - invested_value
+
+            total_investment += invested_value
+            total_current_value += current_value
+
+            portfolio_data.append({
+                "ID": item_id,
+                "Stock": stock,
+                "Purchase Price (₹)": round(purchase_price, 2),
+                "Current Price (₹)": round(current_price, 2),
+                "Quantity": quantity,
+                "Invested Value (₹)": round(invested_value, 2),
+                "Current Value (₹)": round(current_value, 2),
+                "Profit / Loss (₹)": round(profit_loss, 2)
+            })
+
+        total_profit_loss = total_current_value - total_investment
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "Total Investment",
+            f"₹{total_investment:,.2f}"
+        )
+
+        col2.metric(
+            "Current Value",
+            f"₹{total_current_value:,.2f}"
+        )
+
+        col3.metric(
+            "Total Profit / Loss",
+            f"₹{total_profit_loss:,.2f}",
+            delta=f"₹{total_profit_loss:,.2f}"
+        )
+
+        st.subheader("Your Investments")
+
+        portfolio_df = pd.DataFrame(portfolio_data)
+
+        st.dataframe(
+            portfolio_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        fig = px.pie(
+            portfolio_df,
+            names="Stock",
+            values="Invested Value (₹)",
+            title="Portfolio Investment Distribution",
+            hole=0.45
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("Manage Investments")
+
+        remove_options = {
+            f"{item['Stock']} — ID {item['ID']}": item["ID"]
+            for item in portfolio_data
+        }
+
+        selected_remove = st.selectbox(
+            "Select investment to remove",
+            list(remove_options.keys())
+        )
+
+        if st.button("Remove Investment"):
+            conn = sqlite3.connect("stocksense.db")
+            conn.execute(
+                "DELETE FROM portfolio WHERE id = ?",
+                (remove_options[selected_remove],)
+            )
+            conn.commit()
+            conn.close()
+
+            st.success("Investment removed successfully!")
+            st.rerun()
+
+    else:
+        st.info("Your portfolio is empty. Add your first investment!")
+
+    st.stop()
+
 elif page != "Dashboard":
 
     st.title(page)
